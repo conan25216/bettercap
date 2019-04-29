@@ -103,6 +103,7 @@ func (mod *MySQLServer) Start() error {
 
 	return mod.SetRunning(true, func() {
 		mod.Info("server starting on address %s", mod.address)
+		// fmt.Printf("conan add %v", mod.Running())
 		for mod.Running() {
 			if conn, err := mod.listener.AcceptTCP(); err != nil {
 				mod.Warning("error while accepting tcp connection: %s", err)
@@ -114,6 +115,7 @@ func (mod *MySQLServer) Start() error {
 				clientAddress := strings.Split(conn.RemoteAddr().String(), ":")[0]
 				readBuffer := make([]byte, 16384)
 				reader := bufio.NewReader(conn)
+				// fmt.Printf("reader size: %v\n", reader.Size())
 				read := 0
 
 				mod.Info("connection from %s", clientAddress)
@@ -125,14 +127,19 @@ func (mod *MySQLServer) Start() error {
 					mod.Warning("error while reading client message: %s", err)
 					continue
 				}
-				// fmt.Printf("%v", readBuffer) // conan add here debug telnet quesion
+				// fmt.Printf("conan add readBuffer %v", string(readBuffer[0:20])) // conan add here debug telnet quesion
 				// parse client capabilities and validate connection
 				// TODO: parse mysql connections properly and
 				//       display additional connection attributes
-				if len(readBuffer) <= 6 {
-					mod.Warning("unpexpected buffer size %d", read)
+				// fmt.Printf("conan add length :%v", len(readBuffer))
+				if string(readBuffer[0]) != "P" {
+					mod.Warning("unpexpected protocal %d", read)
 					continue
 				}
+				// if readBuffer[0] != byte("P") {
+				// 	mod.Warning("conan add unpexpected buffer size %d", read)
+				// 	continue
+				// }
 				capabilities := fmt.Sprintf("%08b", (int(uint32(readBuffer[4]) | uint32(readBuffer[5])<<8)))
 				loadData := string(capabilities[8])
 				username := string(bytes.Split(readBuffer[36:], []byte{0})[0])
